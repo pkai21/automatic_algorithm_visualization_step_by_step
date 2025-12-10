@@ -13,6 +13,8 @@ doubtsV1 = []
 
 graphH = None
 
+state = [[], [], 0]  # States of the program including nodes traversed in G, H, order of the state, colorV0, colorV1, graphH
+
 class Graph:
     def __init__(self, V0, V1):
         self.V0 = V0 #cạnh của V_0
@@ -75,12 +77,16 @@ def MINIMIZENFA(ver):
     for v in V1_Undivided:
         doubtsV1[v[0]][v[1]][v[2]][0] = 0
         doubtsV1[v[0]][v[1]][v[2]][1] = 0
-
+    
+    state.append(colorV0)
+    state.append(colorV1)
+    state.append(graphH)
+    
     if ver == 0:  
         for u in V0:
             graphH.empty()
             EQUIVLEFT(u)
-            
+
             for v in V0:
                 if v in graphH.get_NodeV0():
                     if colorV0[v[0]][v[1]] != 'BLACK':
@@ -100,28 +106,44 @@ def MINIMIZENFA(ver):
 
 
 def RELAX_V0(u):
+    state[1].insert(0, u)
+    state[2] += 1
     for v in graphH.adj(u):
+        state[1].insert(0, v)
         doubtsV1[v[0][0]][v[0][1]][v[0][2]][v[1]] -= 1
+        state[2] += 1
         if doubtsV1[v[0][0]][v[0][1]][v[0][2]][v[1]] == 0:
             colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] = 'BLACK'
+            state[2] += 1
             RELAX_V1(v)
+    state[1].pop(0)
+    state[2] += 1
 
-            
 def RELAX_V1(v):
+    state[1].insert(0, v)
+    state[2] += 1
     for u in graphH.adj(v):
+        state[1].insert(0, v)
         doubtsV0[u[0]][u[1]] -= 1
+        state[2] += 1
         if doubtsV0[u[0]][u[1]] == 0:
             colorV0[u[0]][u[1]] = 'BLACK'
+            state[2] += 1
             RELAX_V0(u)
+    state[1].pop(0)
+    state[2] += 1
 
-            
 def EQUIVLEFT(u):
+    state[0].insert(0, u)
+    state[2] += 1
     if colorV0[u[0]][u[1]] is not None:
+        state[0].pop(0)
+        state[2] += 1
         return colorV0[u[0]][u[1]]
     
     colorV0[u[0]][u[1]] = 'GREY'
     doubtsV0[u[0]][u[1]] = 0
-    
+    state[2] += 1
     for v in A0(u):
         if colorV0[u[0]][u[1]] != 'BLACK':  
             col_v = EQUIVRIGHT(v)
@@ -129,27 +151,36 @@ def EQUIVLEFT(u):
             if col_v == 'BLACK':
                 colorV0[u[0]][u[1]] = 'BLACK'
                 doubtsV0[u[0]][u[1]] = 0
-            
+                state[2] += 1
             elif col_v == 'GREY':
                 graphH.add_edge(v, u)
                 doubtsV0[u[0]][u[1]] = 1
-    
+                state[2] += 1
+
     if colorV0[u[0]][u[1]] == 'GREY':
         if doubtsV0[u[0]][u[1]] == 0:
             colorV0[u[0]][u[1]] = 'WHITE'
-    
+            state[2] += 1
+
     if colorV0[u[0]][u[1]] == 'BLACK': 
         RELAX_V0(u)
-    
+
+    state[0].pop(0)
+    state[2] += 1
     return colorV0[u[0]][u[1]]
 
 
 def EQUIVRIGHT(v):
+    state[0].insert(0, v)
+    state[2] += 1
     if colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] is not None:
+        state[0].pop(0)
+        state[2] += 1
         return colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]]
     
     colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] = 'GREY'
     doubtsV1[v[0][0]][v[0][1]][v[0][2]][v[1]] = 0
+    state[2] += 1
     
     for u in A1(v):
         if colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] != 'WHITE':  
@@ -158,18 +189,23 @@ def EQUIVRIGHT(v):
             if col_u == 'WHITE':
                 colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] = 'WHITE'
                 doubtsV1[v[0][0]][v[0][1]][v[0][2]][v[1]] = 0
-           
+                state[2] += 1
+
             elif col_u == 'GREY':
                 graphH.add_edge(u, v)
                 doubtsV1[v[0][0]][v[0][1]][v[0][2]][v[1]] += 1
-    
+                state[2] += 1
+
     if colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] == 'GREY':
         if doubtsV1[v[0][0]][v[0][1]][v[0][2]][v[1]] == 0:
             colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] = 'BLACK'
-    
+            state[2] += 1
+
     if colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] == 'BLACK':
         RELAX_V1(v)
-    
+
+    state[0].pop(0)
+    state[2] += 1
     return colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]]
 
 
