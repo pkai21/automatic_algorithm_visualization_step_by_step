@@ -1,5 +1,5 @@
 import math
-import core.helper.input_config_bianchini as input_config_bianchini
+import core.helper.bianchini_algo.input_config_bianchini as input_config_bianchini
 
 succ = []
 dist = []

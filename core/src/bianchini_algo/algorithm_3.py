@@ -1,4 +1,4 @@
-import core.helper.input_config_bianchini as input_config_bianchini
+import core.helper.bianchini_algo.input_config_bianchini as input_config_bianchini
 import itertools
 from core.src.bianchini_algo.algorithm_5 import labelStates
 
