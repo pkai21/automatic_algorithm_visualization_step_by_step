@@ -5,7 +5,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import io
 from PIL import Image
 
-def visualize(Q, F, delta, sigma, title_text, max_states, state_labels={}, return_fig=False):
+def visualize_couterexample(Q, F, delta, sigma, state_labels={}, return_fig=False):
     all_states = set(Q)
     if not all_states:
         return None
@@ -15,7 +15,7 @@ def visualize(Q, F, delta, sigma, title_text, max_states, state_labels={}, retur
     
     G = nx.DiGraph()
     G.add_nodes_from(states)
-    
+
     edge_weights = {}
     for p in range(len(delta)):
         for x in sigma:
@@ -59,42 +59,78 @@ def visualize(Q, F, delta, sigma, title_text, max_states, state_labels={}, retur
         node_sizes_map[node] = size
     
     # ===============================================
-    #  CẤU TRÚC ELIP
+    #  CẤU TRÚC BẢNG
     # ===============================================
-    radius_x = 9.0  
-    radius_y = 5.5  
+    pos = {}
+    dx = 6.0  
+    dy = 5.0  
+
+    # A. Tách các Node thành Row 1 và Remaining
+    row1_nodes = []
+    remaining_nodes = []
     
-    start_angle = np.pi
-    angles = start_angle + np.linspace(0, 2 * np.pi, max_states, endpoint=False)
+    # Tìm node kết thúc để ngắt hàng 1
+    # Logic: Duyệt từ 0, gặp node nào là Final (Red) đầu tiên thì dừng Row 1 tại đó
+    cutoff_index = len(states) 
     
-    fixed_pos = {}
-    for i in range(max_states):
-        x = radius_x * np.cos(angles[i])
-        y = radius_y * np.sin(angles[i])
-        fixed_pos[i] = (x, y)
+    for i, node in enumerate(states):
+        is_final = False
+        try:
+             if isinstance(F, dict): is_final = (F.get(node) == 1)
+             else: is_final = (F[node] == 1)
+        except: pass
+        
+        if is_final:
+            cutoff_index = i + 1 # Lấy cả node final này vào hàng 1
+            break
+            
+    row1_nodes = states[:cutoff_index]
+    remaining_nodes = states[cutoff_index:]
+
+    # B. Tính toán số lượng node cho các hàng sau
+    len_row1 = len(row1_nodes)
+    # "số node bằng hàng đầu - 2"
+    len_sub_row = max(1, len_row1 - 2) 
+
+    # C. Đặt tọa độ cho Hàng 1
+    for i, node in enumerate(row1_nodes):
+        # Hàng 1 nằm ở y = 0
+        pos[node] = (i * dx, 0)
+        
+    # D. Đặt tọa độ cho các hàng còn lại
+    current_idx = 0
+    row_count = 1 # Bắt đầu từ hàng thứ 2 (y = -dy)
     
-    pos = {node: fixed_pos[node] for node in states}
-    
+    while current_idx < len(remaining_nodes):
+        # Lấy một nhóm node cho hàng hiện tại
+        chunk = remaining_nodes[current_idx : current_idx + len_sub_row]
+        
+        for k, node in enumerate(chunk):
+            # "xếp vị trí đầu tiên ngang bằng với vị trí thứ 2 của hàng đầu"
+            # Vị trí thứ 2 của hàng đầu có index = 1 -> x = 1 * dx
+            # Vậy node đầu tiên của hàng này (k=0) sẽ có x = (1 + 0) * dx
+            x_pos = (1 + k) * dx
+            y_pos = -row_count * dy
+            pos[node] = (x_pos, y_pos)
+            
+        current_idx += len_sub_row
+        row_count += 1
+
+    total_rows = row_count
+
     # ===============================================
     # 3. VẼ ĐỒ THỊ
     # ===============================================
     fig = plt.figure(figsize=(20, 12)) 
 
-    # 1. Vẽ vòng tròn nền
-    for i in range(max_states):
-        center = fixed_pos[i]
-        circle_radius = 1.8 
-        circle = plt.Circle(center, circle_radius, color='gray', fill=False, alpha=0.15, lw=2)
-        plt.gca().add_patch(circle)
-
-    # 2. Phân loại cạnh
+    # Phân loại cạnh
     self_loops = [(u, v) for u, v in G.edges() if u == v]
     regular_edges = [(u, v) for u, v in G.edges() if u != v]
     
     edge_labels = {(u, v): d['label'] for u, v, d in G.edges(data=True)}
     regular_edge_labels = {k: v for k, v in edge_labels.items() if k[0] != k[1]}
 
-    # 3. Vẽ cạnh thường
+    # Vẽ cạnh thường
     nx.draw_networkx_edges(G, pos,
                            edgelist=regular_edges,
                            node_size=node_sizes_list, 
@@ -106,36 +142,25 @@ def visualize(Q, F, delta, sigma, title_text, max_states, state_labels={}, retur
     nx.draw_networkx_edge_labels(G, pos,
                                  edge_labels=regular_edge_labels,
                                  font_color='darkgreen',
-                                 font_size=26,
+                                 font_size=24,
                                  label_pos=0.5,
                                  bbox=dict(facecolor='white', edgecolor='none', alpha=0.9),
                                  connectionstyle="arc3,rad=0.25")
 
-    # 4. Vẽ cạnh tự vòng (DYNAMIC SCALING)
-    # Biến để theo dõi vị trí cao nhất của nhãn -> dùng để set ylim tự động
-    max_y_reached = radius_y 
-
+    # Vẽ cạnh tự vòng (Self-loops)
+    max_y_reached = 0
+    
     for u, v in self_loops:
+        if u not in pos: continue # Phòng hờ lỗi
         x, y = pos[u]
         
-        # --- TÍNH TỶ LỆ (SCALE) ---
-        # Lấy kích thước node hiện tại
         current_size = node_sizes_map[u]
-        # Tính tỷ lệ so với kích thước chuẩn (căn bậc 2 vì size là diện tích)
         scale = np.sqrt(current_size / base_size)
-        
-        # --- CẤU HÌNH VÒNG LẶP ---
-        # Arm (tay đòn) càng lớn vòng càng cao. Base arm = 70.
         arm_len = 70 * scale
         
-        theta = np.pi / 2 # Hướng lên trên (90 độ)
-        deg = 90
-        angleA = deg + 25 
-        angleB = deg - 25
+        # Style loop hướng lên trên
+        loop_style = f"arc,angleA=115,angleB=65,armA={arm_len},armB={arm_len},rad=30"
         
-        loop_style = f"arc,angleA={angleA},angleB={angleB},armA={arm_len},armB={arm_len},rad=30"
-        
-        # Vẽ cạnh
         nx.draw_networkx_edges(G, pos,
                                edgelist=[(u, v)],
                                node_size=node_sizes_map[u],
@@ -144,18 +169,16 @@ def visualize(Q, F, delta, sigma, title_text, max_states, state_labels={}, retur
                                connectionstyle=loop_style,
                                arrowstyle='->')
         
-        # --- CẤU HÌNH NHÃN ---
         lbl = edge_labels.get((u, v))
         if lbl:
-            # Offset chuẩn là 2. Nhân với scale để đẩy xa hơn nếu node to.
-            base_offset = 2
+            base_offset = 1.5
             current_offset = base_offset * scale
             
             label_x = x # Giữ nguyên x
             label_y = y + current_offset # Đẩy y lên trên
             
             plt.text(label_x, label_y, lbl,
-                     size=26, color='darkgreen',
+                     size=24, color='darkgreen',
                      ha='center', va='center',
                      bbox=dict(facecolor='white', edgecolor='none', alpha=0.9),
                      zorder=10)
@@ -164,7 +187,7 @@ def visualize(Q, F, delta, sigma, title_text, max_states, state_labels={}, retur
             if label_y > max_y_reached:
                 max_y_reached = label_y
 
-    # 5. Vẽ Node và Nhãn Node
+    # Vẽ Node và Nhãn
     nx.draw_networkx_nodes(G, pos,
                            node_color=node_colors,
                            node_size=node_sizes_list)
@@ -176,29 +199,23 @@ def visualize(Q, F, delta, sigma, title_text, max_states, state_labels={}, retur
     
     plt.axis('off')
 
-    # --- TỰ ĐỘNG ĐIỀU CHỈNH KHUNG HÌNH (LIMITS) ---
-    # Tính margin dựa trên vị trí cao nhất thực tế của các nhãn vòng lặp
-    # Thêm 2.0 đơn vị đệm cho thoáng
-    required_top_margin = max_y_reached + 2.0
+    # --- TỰ ĐỘNG ĐIỀU CHỈNH KHUNG HÌNH (XLIM, YLIM) ---
+    # Tìm giới hạn dựa trên tọa độ thực tế đã tính
+    all_x = [p[0] for p in pos.values()]
+    all_y = [p[1] for p in pos.values()]
     
-    # Margin mặc định dựa trên elip
-    default_margin_y = radius_y + 5.0
+    if all_x:
+        margin_x = 3.0
+        margin_y = 3.0
+        plt.xlim(min(all_x) - margin_x, max(all_x) + margin_x)
+        plt.ylim(min(all_y) - margin_y, max(max_y_reached, max(all_y)) + margin_y)
     
-    # Chọn cái nào lớn hơn
-    final_max_y = max(default_margin_y, required_top_margin)
-    final_max_x = radius_x + 5.0
-    
-    plt.xlim(-final_max_x, final_max_x)
-    # Trục Y: phía dưới chỉ cần margin thường, phía trên dùng margin đã tính toán
-    plt.ylim(-(radius_y + 2.0), final_max_y)
-    
-    plt.margins(0)
     plt.tight_layout()
 
     if return_fig:
         canvas = FigureCanvasAgg(fig)
         buf = io.BytesIO()
-        canvas.print_figure(buf, format='png', bbox_inches='tight', pad_inches=0.05)
+        canvas.print_figure(buf, format='png', bbox_inches='tight', pad_inches=0.1)
         buf.seek(0)
         pil_image = Image.open(buf)
         plt.close(fig)

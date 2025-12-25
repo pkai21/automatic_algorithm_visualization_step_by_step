@@ -1,4 +1,3 @@
-import core.helper.bianchini_algo.input_config_bianchini as input_config_bianchini
 import itertools
 from core.src.bianchini_algo.algorithm_5 import labelStates
 
@@ -49,18 +48,18 @@ class Graph:
         self.Node_V0 = []
         self.Node_V1 = []
         
-def MINIMIZENFA(ver):
+def MINIMIZENFA(ver, Q, sigma, F, delta):
     global colorV0, colorV1, doubtsV0, doubtsV1, graphH, V0
     
-    colorV0 = [[None for _ in range(len(input_config_bianchini.Q))] for _ in range(len(input_config_bianchini.Q))]
-    V0 = list(itertools.product(input_config_bianchini.Q, input_config_bianchini.Q))
-    V1_Undivided = list(itertools.product(input_config_bianchini.Q, input_config_bianchini.Q, input_config_bianchini.sigma))
-    colorV1 = [[[[None for _ in range(2)] for _ in range(len(input_config_bianchini.sigma))] for _ in range(len(input_config_bianchini.Q))] for _ in range(len(input_config_bianchini.Q))]
-    graphH = Graph([[None for _ in range(len(input_config_bianchini.Q))] for _ in range(len(input_config_bianchini.Q))],
-                   [[[[None for _ in range(2)] for _ in range(len(input_config_bianchini.sigma))] for _ in range(len(input_config_bianchini.Q))] for _ in range(len(input_config_bianchini.Q))])
+    colorV0 = [[None for _ in range(len(Q))] for _ in range(len(Q))]
+    V0 = list(itertools.product(Q, Q))
+    V1_Undivided = list(itertools.product(Q, Q, sigma))
+    colorV1 = [[[[None for _ in range(2)] for _ in range(len(sigma))] for _ in range(len(Q))] for _ in range(len(Q))]
+    graphH = Graph([[None for _ in range(len(Q))] for _ in range(len(Q))],
+                   [[[[None for _ in range(2)] for _ in range(len(sigma))] for _ in range(len(Q))] for _ in range(len(Q))])
     
     for u in V0:
-        if (input_config_bianchini.F[u[0]] == 1 and input_config_bianchini.F[u[1]] == 0) or (input_config_bianchini.F[u[0]] == 0 and input_config_bianchini.F[u[1]] == 1):
+        if (F[u[0]] == 1 and F[u[1]] == 0) or (F[u[0]] == 0 and F[u[1]] == 1):
             colorV0[u[0]][u[1]] = 'BLACK'
         elif u[0] == u[1]:
             colorV0[u[0]][u[1]] = 'WHITE'
@@ -69,11 +68,11 @@ def MINIMIZENFA(ver):
         colorV1[v[0]][v[1]][v[2]][0] = None  
         colorV1[v[0]][v[1]][v[2]][1] = None  
 
-    doubtsV0 = [[None for _ in range(len(input_config_bianchini.Q))] for _ in range(len(input_config_bianchini.Q))]
+    doubtsV0 = [[None for _ in range(len(Q))] for _ in range(len(Q))]
     for u in V0:
         doubtsV0[u[0]][u[1]] = 0
 
-    doubtsV1 = [[[[None for _ in range(2)] for _ in range(len(input_config_bianchini.sigma))] for _ in range(len(input_config_bianchini.Q))] for _ in range(len(input_config_bianchini.Q))]
+    doubtsV1 = [[[[None for _ in range(2)] for _ in range(len(sigma))] for _ in range(len(Q))] for _ in range(len(Q))]
     for v in V1_Undivided:
         doubtsV1[v[0]][v[1]][v[2]][0] = 0
         doubtsV1[v[0]][v[1]][v[2]][1] = 0
@@ -85,7 +84,7 @@ def MINIMIZENFA(ver):
     if ver == 0:  
         for u in V0:
             graphH.empty()
-            EQUIVLEFT(u)
+            EQUIVLEFT(u, sigma, delta)
 
             for v in V0:
                 if v in graphH.get_NodeV0():
@@ -93,10 +92,10 @@ def MINIMIZENFA(ver):
                         colorV0[v[0]][v[1]] = 'WHITE'
     else:
         print("Use algorithm 5")
-        V0_considered = getV0_considered()
+        V0_considered = getV0_considered(Q, sigma, F, delta)
         for u in V0_considered:
             graphH.empty()
-            EQUIVLEFT(u)
+            EQUIVLEFT(u, sigma, delta)
             for v in V0:
                 if v in graphH.get_NodeV0():
                     if colorV0[v[0]][v[1]] != 'BLACK':
@@ -133,7 +132,7 @@ def RELAX_V1(v):
     state[1].pop(0)
     state[2] += 1
 
-def EQUIVLEFT(u):
+def EQUIVLEFT(u, sigma, delta):
     state[0].insert(0, u)
     state[2] += 1
     if colorV0[u[0]][u[1]] is not None:
@@ -144,9 +143,9 @@ def EQUIVLEFT(u):
     colorV0[u[0]][u[1]] = 'GREY'
     doubtsV0[u[0]][u[1]] = 0
     state[2] += 1
-    for v in A0(u):
+    for v in A0(u, sigma, delta):
         if colorV0[u[0]][u[1]] != 'BLACK':  
-            col_v = EQUIVRIGHT(v)
+            col_v = EQUIVRIGHT(v, sigma, delta)
             
             if col_v == 'BLACK':
                 colorV0[u[0]][u[1]] = 'BLACK'
@@ -170,7 +169,7 @@ def EQUIVLEFT(u):
     return colorV0[u[0]][u[1]]
 
 
-def EQUIVRIGHT(v):
+def EQUIVRIGHT(v,sigma, delta):
     state[0].insert(0, v)
     state[2] += 1
     if colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] is not None:
@@ -182,9 +181,9 @@ def EQUIVRIGHT(v):
     doubtsV1[v[0][0]][v[0][1]][v[0][2]][v[1]] = 0
     state[2] += 1
     
-    for u in A1(v):
+    for u in A1(v, delta):
         if colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] != 'WHITE':  
-            col_u = EQUIVLEFT(u)
+            col_u = EQUIVLEFT(u, sigma, delta)
             
             if col_u == 'WHITE':
                 colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]] = 'WHITE'
@@ -210,24 +209,24 @@ def EQUIVRIGHT(v):
 
 
 # Danh sách V1 được nối từ u  
-def A0(u):
+def A0(u, sigma, delta):
     listV = []
-    for x in input_config_bianchini.sigma:
-        for p_ in input_config_bianchini.delta[u[0]][x]:
+    for x in sigma:
+        for p_ in delta[u[0]][x]:
             listV.append(((p_, u[1], x), 1))
-        for q_ in input_config_bianchini.delta[u[1]][x]:
+        for q_ in delta[u[1]][x]:
             listV.append(((u[0], q_, x), 0))
     return listV
 
 
 # Danh sách V0 được nối từ v
-def A1(v):
+def A1(v, delta):
     listU = []
     if (v[1] == 0):
-        for p_ in input_config_bianchini.delta[v[0][0]][v[0][2]]:
+        for p_ in delta[v[0][0]][v[0][2]]:
             listU.append((p_, v[0][1]))
     else:
-        for q_ in input_config_bianchini.delta[v[0][1]][v[0][2]]:
+        for q_ in delta[v[0][1]][v[0][2]]:
             listU.append((v[0][0], q_))
     return listU
 
@@ -274,8 +273,8 @@ def GRAPHW():
 
 
 # Lấy V0 cần xét khi sử dụng thuật toán 5
-def getV0_considered():
-    group = labelStates()
+def getV0_considered(Q, sigma, F, delta):
+    group = labelStates(Q, sigma, F, delta)
     V0_considered = []
     for values in group:
         if len(values) > 1:
@@ -284,25 +283,3 @@ def getV0_considered():
                     if i != j:
                         V0_considered.append((values[i], values[j]))
     return V0_considered
-
-
-# Lấy bảng chữ cái và trạng thái kết thúc cho NFA sau khi rút gọn
-def newNFA(miniNFA):
-    new_Q = []
-    for qs in miniNFA:
-        new_Q.append(qs[0])
-
-    new_F = [0] * len(new_Q)
-    for q in new_Q:
-        if input_config_bianchini.F[q] == 1:
-            new_F[q] = 1
-    
-    new_delta = [[[] for _ in range(len(input_config_bianchini.sigma))] for _ in range(len(new_Q))]
-    for x in range(len(input_config_bianchini.delta)):
-        for z in input_config_bianchini.sigma:
-            if x in new_Q:
-                for y in input_config_bianchini.delta[x][z]:
-                    if y in new_Q:
-                        new_delta[x][z].append(y)
-
-    return new_Q, new_F, new_delta

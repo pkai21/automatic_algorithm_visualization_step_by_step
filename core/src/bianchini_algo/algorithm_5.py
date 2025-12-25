@@ -1,5 +1,4 @@
 import math
-import core.helper.bianchini_algo.input_config_bianchini as input_config_bianchini
 
 succ = []
 dist = []
@@ -8,13 +7,12 @@ Buckets = [[]]
 Q5 = []
 signature = []
 
-def labelStates():
-    tau = reverse(input_config_bianchini.delta)
-    BFS(input_config_bianchini.Q, tau, input_config_bianchini.F)
+def labelStates(Q, sigma, F, delta):
+    tau = reverse(Q, sigma, delta)
+    BFS(Q, tau, F)
     global succ
-    succ = compute_succesor()
-    return compute_buckets()
-
+    succ = compute_succesor(Q, sigma, F, delta)
+    return compute_buckets(Q, F, delta)
 
 def SIG_sort(a):
     return signature[a]
@@ -24,25 +22,25 @@ def dist_sort(a):
     return dist[a]
 
 
-def compute_buckets():
+def compute_buckets(Q, F, delta):
     global B, signature, Buckets, Q5
-    B = [0] * len(input_config_bianchini.Q)
-    signature = [0] * len(input_config_bianchini.Q)
+    B = [0] * len(Q)
+    signature = [0] * len(Q)
     i = 0
     Buckets = [[]]
-    for j in range(len(input_config_bianchini.F)):
-        if input_config_bianchini.F[j]:
+    for j in range(len(F)):
+        if F[j]:
             B[j] = 1
             i += 1
             Buckets[0].append(j)
     Next, d = 2, 1
-    Q5 = sorted(input_config_bianchini.Q, key=dist_sort)
+    Q5 = sorted(Q, key=dist_sort)
     
     while i < len(Q5) and dist[Q5[i]] < math.inf:
         j = i
         while j + 1 < len(Q5) and dist[Q5[j + 1]] == d:
             j += 1
-            SIG(Q5[j])
+            SIG(Q5[j], delta)
         Q5[i:j + 1] = sorted(Q5[i:j + 1], key=SIG_sort)
         Next = split_interval(Next, i, j)
         i, d = j + 1, d + 1
@@ -69,10 +67,10 @@ def split_interval(Next, i, j):
     return Next + 1
 
 
-def reverse(delta):
-    tau = [[] for i in input_config_bianchini.Q]  # adjacent list
-    for p in input_config_bianchini.Q:
-        for x in input_config_bianchini.sigma:
+def reverse(Q, sigma, delta):
+    tau = [[] for i in Q]  
+    for p in Q:
+        for x in sigma:
             for q in delta[p][x]:
                 tau[q].append(p)
     return tau
@@ -98,23 +96,23 @@ def BFS(Q, tau, F):
                 dist[i] = dist[a] + 1
 
 
-def compute_succesor():
-    succ = [0] * len(input_config_bianchini.Q)
-    for i in input_config_bianchini.F:
+def compute_succesor(Q, sigma, F, delta):
+    succ = [0] * len(Q)
+    for i in F:
         succ[i] = (0, i)
-    Q_temp = [i for i in input_config_bianchini.Q if dist[i] < math.inf]
+    Q_temp = [i for i in Q if dist[i] < math.inf]
     for p in Q_temp:
         d = dist[p]
         found = False
-        for x in input_config_bianchini.sigma:
+        for x in sigma:
             if not found:
-                for p_temp in input_config_bianchini.delta[p][x]:
+                for p_temp in delta[p][x]:
                     if dist[p_temp] + 1 == d:
                         succ[p] = x
                         found = True
     return succ
     
 
-def SIG(p):
-    return (succ[p], B[min(input_config_bianchini.delta[p][succ[p]], key=dist_sort)])
+def SIG(p, delta):
+    return (succ[p], B[min(delta[p][succ[p]], key=dist_sort)])
 
