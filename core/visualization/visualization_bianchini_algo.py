@@ -5,7 +5,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import io
 from PIL import Image
 
-def visualize(Q, F, delta, sigma, title_text, max_states, state_labels={}, return_fig=False):
+def visualize(Q, F, delta, sigma, sigma_labels, title_text, max_states, state_labels={}, return_fig=False):
     all_states = set(Q)
     if not all_states:
         return None
@@ -22,9 +22,9 @@ def visualize(Q, F, delta, sigma, title_text, max_states, state_labels={}, retur
             for q in delta[p][x]:
                 key = (p, q)
                 if key in edge_weights:
-                    edge_weights[key].append(str(x))
+                    edge_weights[key].append(str(sigma_labels[x]))
                 else:
-                    edge_weights[key] = [str(x)]
+                    edge_weights[key] = [str(sigma_labels[x])]
     
     for (src, dest), weights in edge_weights.items():
         if src in existing_set and dest in existing_set:

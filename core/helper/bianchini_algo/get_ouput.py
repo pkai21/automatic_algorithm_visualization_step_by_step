@@ -18,4 +18,5 @@ def newNFA(miniNFA,Q, F, sigma, delta):
                 if y not in new_delta[x][j]:
                         new_delta[x][j].append(y)
 
+    print (state_labels)
     return new_Q, F, new_delta, state_labels

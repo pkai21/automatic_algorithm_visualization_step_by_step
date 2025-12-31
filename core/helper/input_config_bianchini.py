@@ -2,23 +2,20 @@ from collections import defaultdict
 import csv
 import ast
 
-# core/helper/bianchini_algo/input_config_bianchini.py
-# (File này giờ chỉ là công cụ tính toán, không lưu dữ liệu)
-
 def set_nfa_config(states, final_states, alphabet, transitions):
     """
     Hàm này chỉ nhận dữ liệu thô, xử lý và TRẢ VỀ kết quả.
     Không lưu vào biến toàn cục nào cả.
     """
     Q = states
-    sigma = alphabet
+    sigma, sigma_labels = convert_sigma(alphabet)
     F = convert_F(final_states, Q)
     
     delta_raw = convert_to_2d_array(transitions, Q, sigma)
     delta = normalize_delta(delta_raw)
 
     # Trả về kết quả để người gọi tự quản lý
-    return Q, sigma, F, delta
+    return Q, sigma, sigma_labels, F, delta
 
 # --- Các hàm hỗ trợ giữ nguyên ---
 def convert_to_2d_array(delta_tuple, Q, sigma):
@@ -36,3 +33,9 @@ def convert_F(F_val, Q):
     for i in F_val:
         F_res[i] = 1
     return F_res
+
+def convert_sigma(alphabet):
+    sigma = list(range(len(alphabet)))
+    sigma_labels = dict(enumerate(alphabet))
+    return sigma, sigma_labels
+ 
