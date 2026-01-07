@@ -15,7 +15,7 @@ class LandingPage(ctk.CTkFrame):
 
         btn_counter = ctk.CTkButton(
             center_frame,
-            text="Create counter-examples",
+            text="Create test case",
             font=ctk.CTkFont(size=20, weight="bold"),
             height=80,
             width=400,
