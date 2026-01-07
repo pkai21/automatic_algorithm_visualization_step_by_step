@@ -5,9 +5,10 @@ from tkinter import filedialog, messagebox
 from gui.base import BaseView
 
 # --- IMPORT LOGIC ---
-from core.helper.bianchini_algo.read_input import list_nfa_files_in_folder, read_nfa_from_file
+from core.helper.read_input import list_nfa_files_in_folder, read_nfa_from_file
 from core.src.bianchini_algo.algorithm_3 import MINIMIZENFA
-from core.helper.bianchini_algo.get_ouput import newNFA
+from core.src.tarjan_algo.paige_tarjan import TARJANNFA
+from core.helper.get_ouput import newNFA
 
 # --- IMPORT BOTH VISUALIZATIONS ---
 from core.visualization.visualization_bianchini_algo import visualize as visualize_v1
@@ -404,29 +405,47 @@ class ComparisonPage(BaseView):
 
     def run_minimization(self, nfa_data, panel_key, title):
         Q, sigma, sigma_labels, F, delta, filename = nfa_data
-        if self.selected_algorithm == "Bianchini":
-            try:
+        
+        try:
+            minimized = None
+            if self.selected_algorithm == "Bianchini":
                 minimized = MINIMIZENFA(1, Q=Q, sigma=sigma, F=F, delta=delta)
+            elif self.selected_algorithm == "Tarjan":
+                minimized = TARJANNFA(Q=Q, sigma=sigma, F=F, delta=delta)
+            
+            is_valid_result = False
+            if minimized and isinstance(minimized, list) and len(minimized) > 0:
+                if any(group for group in minimized): 
+                    is_valid_result = True
+
+            if is_valid_result:
                 new_Q, new_F, new_delta, state_labels = newNFA(minimized, Q, F, sigma, delta)
                 
-                # --- [FIX] QUAN TRỌNG: Thêm state_labels vào tuple data lưu vào cache ---
+                # Đóng gói dữ liệu
                 result_data = (new_Q, sigma, sigma_labels, new_F, new_delta, filename, state_labels)
-                
                 self.panel_data_cache[panel_key] = (result_data, title)
                 
+                # --- BƯỚC 3: VẼ HÌNH ---
                 mode = self.panel_viz_modes.get(panel_key, "V1")
+                full_title = title + f"_{filename}"
+                pil_image = None
+
                 if mode == "V1":
-                     pil_image = visualize_v1(new_Q, new_F, new_delta, sigma, sigma_labels, title + f"_{filename}", len(Q), state_labels=state_labels, return_fig=True)
+                     pil_image = visualize_v1(new_Q, new_F, new_delta, sigma, sigma_labels, full_title, len(Q), state_labels=state_labels, return_fig=True)
                 else:
                      pil_image = visualize_v2(new_Q, new_F, new_delta, sigma, sigma_labels, state_labels=state_labels, return_fig=True)
 
-                if pil_image: self.update_panel_image(pil_image, panel_key, title)
+                if pil_image: 
+                    self.update_panel_image(pil_image, panel_key, title)
+            else:
+                print(f"Warning: {self.selected_algorithm} returned invalid result: {minimized}")
+                # Có thể hiển thị thông báo lỗi lên giao diện nếu cần
                 
-            except Exception as e:
-                print(e)
-                self.clear_panel_image(panel_key, "Error")
-        elif self.selected_algorithm == "Tarjan":
-             self.clear_panel_image(panel_key, "TODO: Implement Tarjan")
+        except Exception as e:
+            print(f"Error running {self.selected_algorithm}: {e}")
+            import traceback
+            traceback.print_exc() 
+            self.clear_panel_image(panel_key, "Error")
 
     def display_nfa_image(self, nfa_data, panel_key, title):
         self.display_nfa_to_panel(nfa_data, panel_key, title)

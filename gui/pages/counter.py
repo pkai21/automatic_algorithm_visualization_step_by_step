@@ -3,8 +3,12 @@ import customtkinter as ctk
 from core.gen.auto_gen_nfa.finite_gen_NFA_minimazation import finite_generate_delta
 from core.gen.auto_gen_nfa.infinite_gen_NFA_minimazation import infinite_generate_delta
 from core.gen.auto_gen_nfa.gen_NFA import gene_NFA
-from core.helper.bianchini_algo.write_input import write_test_case
+from core.helper.kameda_algo.get_output_kameda import get_kameda_out
+from core.helper.kameda_algo.set_input_kameda import set_kameda_in
+from core.helper.write_input import write_test_case
 from core.helper.export_input_config_bianchini import get_nfa_config
+from core.src.kameda_algo.algorithm_kameda import KamedaWeinerMinimizer
+from core.src.tarjan_algo.paige_tarjan import TARJANNFA
 from gui.base import BaseView
 
 # --- IMPORT CORE LOGIC ---
@@ -17,7 +21,7 @@ from core.visualization.visualization_bianchini_algo import visualize as visuali
 
 # Import Algorithm
 from core.src.bianchini_algo.algorithm_3 import MINIMIZENFA 
-from core.helper.bianchini_algo.get_ouput import newNFA
+from core.helper.get_ouput import newNFA
 
 class CounterExamplePage(BaseView):
     def __init__(self, master, on_home, **kwargs):
@@ -471,7 +475,15 @@ class CounterExamplePage(BaseView):
             except Exception as e:
                 self.clear_panel_image("result_output1", f"Error: {str(e)}")
         elif algo == "Tarjan":
-             self.clear_panel_image("result_output1", "Tarjan Not Implemented")
+            try:
+                minimized = TARJANNFA(Q=self.Q_counterexample, sigma=self.sigma_counterexample, F=self.F_counterexample, delta=self.delta_counterexample)
+                new_Q, new_F, new_delta, state_labels = newNFA(minimized, self.Q_counterexample, self.F_counterexample, self.sigma_counterexample, self.delta_counterexample)
+                
+                # [UPDATE]
+                self._cache_and_render("result_output1", new_Q, new_F, new_delta, self.sigma_counterexample, self.sigma_labels_counterexample, "Minimized NFA", state_labels=state_labels)
+                
+            except Exception as e:
+                self.clear_panel_image("result_output1", f"Error: {str(e)}")
 
     def perform_visualization(self, panel_key):
         # [UPDATE]
@@ -479,8 +491,24 @@ class CounterExamplePage(BaseView):
     
     def perform_mini_visualization(self, panel_key):
         # [UPDATE]
-        if self.Q_mini_counterexample:
-             self._cache_and_render(panel_key, self.Q_mini_counterexample, self.F_mini_counterexample, self.delta_mini_counterexample, self.sigma_counterexample, self.sigma_labels_counterexample, "Visual Preview")
+        if self.Q_mini_counterexample == []: 
+            nfa = set_kameda_in(self.sigma_counterexample, self.sigma_labels_counterexample, self.F_counterexample,self.delta_counterexample)
+            print("--- Original NFA ---")
+            print(nfa.transitions)
+            minimizer = KamedaWeinerMinimizer(nfa)
+            min_nfa = minimizer.run()
+            print("\n--- Minimized NFA (Kameda-Weiner) ---")
+            print(min_nfa.start_states)
+            print(min_nfa.accept_states)
+            print(min_nfa.alphabet)
+            print("Transitions:")
+            for src, trans in min_nfa.transitions.items():
+                for char, dests in trans.items():
+                    print(f"  {src} --{char}--> {dests}")
+            self.Q_mini_counterexample, self.sigma_counterexample, self.sigma_labels_counterexample, self.F_mini_counterexample, self.delta_mini_counterexample = get_kameda_out(min_nfa)
+             
+        self._cache_and_render(panel_key, self.Q_mini_counterexample, self.F_mini_counterexample, self.delta_mini_counterexample, self.sigma_counterexample, self.sigma_labels_counterexample, "Visual Preview")
+
 
     # ... (Các hàm validate_Q, validate_F, validate_sigma, add_transition, ... giữ nguyên như cũ, chỉ lưu ý perform_visualization đã update) ...
     def _validate_auto_inputs(self):
