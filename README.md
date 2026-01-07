@@ -2,7 +2,7 @@
 # Ngôn ngữ lập trình: Python (3.13.9)
 # Người thực hiện: Phan Văn Khải
 
-# Chạy : dist\main.exe
+# Tool : dist\NFA Mimimization.exe
 ## Cài đặt
 ```bash
 pip install -r requirements.txt
