@@ -44,8 +44,7 @@ def visualize(Q, F, delta, sigma, sigma_labels, title_text, max_states, state_la
             custom_labels[node] = ", ".join(map(str, sorted(orig_states)))
     else:
         custom_labels = {node: str(node) for node in states}
-    
-    # --- TÍNH KÍCH THƯỚC NODE ---
+
     base_size = 2200          
     size_per_char = 900       
     
@@ -59,7 +58,7 @@ def visualize(Q, F, delta, sigma, sigma_labels, title_text, max_states, state_la
         node_sizes_map[node] = size
     
     # ===============================================
-    #  CẤU TRÚC ELIP
+    #  ELIP
     # ===============================================
     radius_x = 9.0  
     radius_y = 5.5  
@@ -76,25 +75,21 @@ def visualize(Q, F, delta, sigma, sigma_labels, title_text, max_states, state_la
     pos = {node: fixed_pos[node] for node in states}
     
     # ===============================================
-    # 3. VẼ ĐỒ THỊ
+    # 3. GRAPH
     # ===============================================
     fig = plt.figure(figsize=(20, 12)) 
-
-    # 1. Vẽ vòng tròn nền
     for i in range(max_states):
         center = fixed_pos[i]
         circle_radius = 1.8 
         circle = plt.Circle(center, circle_radius, color='gray', fill=False, alpha=0.15, lw=2)
         plt.gca().add_patch(circle)
 
-    # 2. Phân loại cạnh
     self_loops = [(u, v) for u, v in G.edges() if u == v]
     regular_edges = [(u, v) for u, v in G.edges() if u != v]
     
     edge_labels = {(u, v): d['label'] for u, v, d in G.edges(data=True)}
     regular_edge_labels = {k: v for k, v in edge_labels.items() if k[0] != k[1]}
 
-    # 3. Vẽ cạnh thường
     nx.draw_networkx_edges(G, pos,
                            edgelist=regular_edges,
                            node_size=node_sizes_list, 
@@ -111,31 +106,24 @@ def visualize(Q, F, delta, sigma, sigma_labels, title_text, max_states, state_la
                                  bbox=dict(facecolor='white', edgecolor='none', alpha=0.9),
                                  connectionstyle="arc3,rad=0.25")
 
-    # 4. Vẽ cạnh tự vòng (DYNAMIC SCALING)
-    # Biến để theo dõi vị trí cao nhất của nhãn -> dùng để set ylim tự động
+    # DYNAMIC SCALING)
     max_y_reached = radius_y 
 
     for u, v in self_loops:
         x, y = pos[u]
         
-        # --- TÍNH TỶ LỆ (SCALE) ---
-        # Lấy kích thước node hiện tại
         current_size = node_sizes_map[u]
-        # Tính tỷ lệ so với kích thước chuẩn (căn bậc 2 vì size là diện tích)
         scale = np.sqrt(current_size / base_size)
         
-        # --- CẤU HÌNH VÒNG LẶP ---
-        # Arm (tay đòn) càng lớn vòng càng cao. Base arm = 70.
         arm_len = 70 * scale
         
-        theta = np.pi / 2 # Hướng lên trên (90 độ)
+        theta = np.pi / 2 
         deg = 90
         angleA = deg + 25 
         angleB = deg - 25
         
         loop_style = f"arc,angleA={angleA},angleB={angleB},armA={arm_len},armB={arm_len},rad=30"
         
-        # Vẽ cạnh
         nx.draw_networkx_edges(G, pos,
                                edgelist=[(u, v)],
                                node_size=node_sizes_map[u],
@@ -144,27 +132,23 @@ def visualize(Q, F, delta, sigma, sigma_labels, title_text, max_states, state_la
                                connectionstyle=loop_style,
                                arrowstyle='->')
         
-        # --- CẤU HÌNH NHÃN ---
         lbl = edge_labels.get((u, v))
         if lbl:
-            # Offset chuẩn là 2. Nhân với scale để đẩy xa hơn nếu node to.
             base_offset = 2
             current_offset = base_offset * scale
             
-            label_x = x # Giữ nguyên x
-            label_y = y + current_offset # Đẩy y lên trên
+            label_x = x 
+            label_y = y + current_offset 
             
             plt.text(label_x, label_y, lbl,
                      size=26, color='darkgreen',
                      ha='center', va='center',
                      bbox=dict(facecolor='white', edgecolor='none', alpha=0.9),
                      zorder=10)
-            
-            # Cập nhật vị trí cao nhất (để lát nữa nới khung hình)
+
             if label_y > max_y_reached:
                 max_y_reached = label_y
 
-    # 5. Vẽ Node và Nhãn Node
     nx.draw_networkx_nodes(G, pos,
                            node_color=node_colors,
                            node_size=node_sizes_list)
@@ -176,20 +160,14 @@ def visualize(Q, F, delta, sigma, sigma_labels, title_text, max_states, state_la
     
     plt.axis('off')
 
-    # --- TỰ ĐỘNG ĐIỀU CHỈNH KHUNG HÌNH (LIMITS) ---
-    # Tính margin dựa trên vị trí cao nhất thực tế của các nhãn vòng lặp
-    # Thêm 2.0 đơn vị đệm cho thoáng
     required_top_margin = max_y_reached + 2.0
     
-    # Margin mặc định dựa trên elip
     default_margin_y = radius_y + 5.0
     
-    # Chọn cái nào lớn hơn
     final_max_y = max(default_margin_y, required_top_margin)
     final_max_x = radius_x + 5.0
     
     plt.xlim(-final_max_x, final_max_x)
-    # Trục Y: phía dưới chỉ cần margin thường, phía trên dùng margin đã tính toán
     plt.ylim(-(radius_y + 2.0), final_max_y)
     
     plt.margins(0)

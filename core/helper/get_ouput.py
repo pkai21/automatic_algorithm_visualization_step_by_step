@@ -1,4 +1,3 @@
-# Lấy bảng chữ cái và trạng thái kết thúc cho NFA sau khi rút gọn
 def newNFA(miniNFA,Q, F, sigma, delta):
     new_Q = []
     state_labels= {} 

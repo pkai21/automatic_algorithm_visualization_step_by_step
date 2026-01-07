@@ -7,8 +7,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 class BaseView(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        self.canvases = {}  # Quản lý các canvas vẽ hình
-        self.panels = {}    # Quản lý các widget container
+        self.canvases = {}  
+        self.panels = {}   
 
     def create_panel_canvas(self, panel_key: str, initial_title: str):
         """Tạo khu vực vẽ Matplotlib bên trong một widget container"""
@@ -17,7 +17,6 @@ class BaseView(ctk.CTkFrame):
         
         panel = self.panels[panel_key]
         
-        # Xóa canvas cũ nếu có
         for widget in panel.winfo_children():
             widget.destroy()
 

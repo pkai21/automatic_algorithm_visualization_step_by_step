@@ -44,8 +44,7 @@ def visualize_couterexample(Q, F, delta, sigma, sigma_labels, state_labels={}, r
             custom_labels[node] = ", ".join(map(str, sorted(orig_states)))
     else:
         custom_labels = {node: str(node) for node in states}
-    
-    # --- TÍNH KÍCH THƯỚC NODE ---
+
     base_size = 2200          
     size_per_char = 900       
     
@@ -59,18 +58,15 @@ def visualize_couterexample(Q, F, delta, sigma, sigma_labels, state_labels={}, r
         node_sizes_map[node] = size
     
     # ===============================================
-    #  CẤU TRÚC BẢNG
+    #  ARRAY
     # ===============================================
     pos = {}
     dx = 6.0  
     dy = 5.0  
 
-    # A. Tách các Node thành Row 1 và Remaining
     row1_nodes = []
     remaining_nodes = []
     
-    # Tìm node kết thúc để ngắt hàng 1
-    # Logic: Duyệt từ 0, gặp node nào là Final (Red) đầu tiên thì dừng Row 1 tại đó
     cutoff_index = len(states) 
     
     for i, node in enumerate(states):
@@ -81,34 +77,25 @@ def visualize_couterexample(Q, F, delta, sigma, sigma_labels, state_labels={}, r
         except: pass
         
         if is_final:
-            cutoff_index = i + 1 # Lấy cả node final này vào hàng 1
+            cutoff_index = i + 1
             break
             
     row1_nodes = states[:cutoff_index]
     remaining_nodes = states[cutoff_index:]
 
-    # B. Tính toán số lượng node cho các hàng sau
     len_row1 = len(row1_nodes)
-    # "số node bằng hàng đầu - 2"
     len_sub_row = max(1, len_row1 - 2) 
 
-    # C. Đặt tọa độ cho Hàng 1
     for i, node in enumerate(row1_nodes):
-        # Hàng 1 nằm ở y = 0
         pos[node] = (i * dx, 0)
-        
-    # D. Đặt tọa độ cho các hàng còn lại
+
     current_idx = 0
-    row_count = 1 # Bắt đầu từ hàng thứ 2 (y = -dy)
+    row_count = 1 
     
     while current_idx < len(remaining_nodes):
-        # Lấy một nhóm node cho hàng hiện tại
         chunk = remaining_nodes[current_idx : current_idx + len_sub_row]
         
         for k, node in enumerate(chunk):
-            # "xếp vị trí đầu tiên ngang bằng với vị trí thứ 2 của hàng đầu"
-            # Vị trí thứ 2 của hàng đầu có index = 1 -> x = 1 * dx
-            # Vậy node đầu tiên của hàng này (k=0) sẽ có x = (1 + 0) * dx
             x_pos = (1 + k) * dx
             y_pos = -row_count * dy
             pos[node] = (x_pos, y_pos)
@@ -119,18 +106,16 @@ def visualize_couterexample(Q, F, delta, sigma, sigma_labels, state_labels={}, r
     total_rows = row_count
 
     # ===============================================
-    # 3. VẼ ĐỒ THỊ
+    # GRAPH
     # ===============================================
     fig = plt.figure(figsize=(20, 12)) 
 
-    # Phân loại cạnh
     self_loops = [(u, v) for u, v in G.edges() if u == v]
     regular_edges = [(u, v) for u, v in G.edges() if u != v]
     
     edge_labels = {(u, v): d['label'] for u, v, d in G.edges(data=True)}
     regular_edge_labels = {k: v for k, v in edge_labels.items() if k[0] != k[1]}
 
-    # Vẽ cạnh thường
     nx.draw_networkx_edges(G, pos,
                            edgelist=regular_edges,
                            node_size=node_sizes_list, 
@@ -147,18 +132,16 @@ def visualize_couterexample(Q, F, delta, sigma, sigma_labels, state_labels={}, r
                                  bbox=dict(facecolor='white', edgecolor='none', alpha=0.9),
                                  connectionstyle="arc3,rad=0.25")
 
-    # Vẽ cạnh tự vòng (Self-loops)
     max_y_reached = 0
     
     for u, v in self_loops:
-        if u not in pos: continue # Phòng hờ lỗi
+        if u not in pos: continue 
         x, y = pos[u]
         
         current_size = node_sizes_map[u]
         scale = np.sqrt(current_size / base_size)
         arm_len = 70 * scale
-        
-        # Style loop hướng lên trên
+
         loop_style = f"arc,angleA=115,angleB=65,armA={arm_len},armB={arm_len},rad=30"
         
         nx.draw_networkx_edges(G, pos,
@@ -174,20 +157,18 @@ def visualize_couterexample(Q, F, delta, sigma, sigma_labels, state_labels={}, r
             base_offset = 1.5
             current_offset = base_offset * scale
             
-            label_x = x # Giữ nguyên x
-            label_y = y + current_offset # Đẩy y lên trên
+            label_x = x 
+            label_y = y + current_offset 
             
             plt.text(label_x, label_y, lbl,
                      size=24, color='darkgreen',
                      ha='center', va='center',
                      bbox=dict(facecolor='white', edgecolor='none', alpha=0.9),
                      zorder=10)
-            
-            # Cập nhật vị trí cao nhất (để lát nữa nới khung hình)
+
             if label_y > max_y_reached:
                 max_y_reached = label_y
 
-    # Vẽ Node và Nhãn
     nx.draw_networkx_nodes(G, pos,
                            node_color=node_colors,
                            node_size=node_sizes_list)
@@ -199,8 +180,6 @@ def visualize_couterexample(Q, F, delta, sigma, sigma_labels, state_labels={}, r
     
     plt.axis('off')
 
-    # --- TỰ ĐỘNG ĐIỀU CHỈNH KHUNG HÌNH (XLIM, YLIM) ---
-    # Tìm giới hạn dựa trên tọa độ thực tế đã tính
     all_x = [p[0] for p in pos.values()]
     all_y = [p[1] for p in pos.values()]
     

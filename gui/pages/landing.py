@@ -6,16 +6,13 @@ class LandingPage(ctk.CTkFrame):
         
         self.configure(fg_color="transparent")
         
-        # Container ở giữa để căn chỉnh
         center_frame = ctk.CTkFrame(self, fg_color="transparent")
         center_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-        # Tiêu đề
         title = ctk.CTkLabel(center_frame, text="NFA TOOL SUITE", 
                              font=ctk.CTkFont(size=40, weight="bold"))
         title.pack(pady=(0, 50))
 
-        # Nút 1: Create counter-examples
         btn_counter = ctk.CTkButton(
             center_frame,
             text="Create counter-examples",
@@ -29,7 +26,6 @@ class LandingPage(ctk.CTkFrame):
         )
         btn_counter.pack(pady=20)
 
-        # Nút 2: Visualize NFA comparisons
         btn_visualize = ctk.CTkButton(
             center_frame,
             text="Visualize NFA comparisons",

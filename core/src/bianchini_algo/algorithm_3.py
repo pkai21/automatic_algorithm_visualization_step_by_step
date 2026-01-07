@@ -12,14 +12,14 @@ doubtsV1 = []
 
 graphH = None
 
-state = [[], [], 0]  # States of the program including nodes traversed in G, H, order of the state, colorV0, colorV1, graphH
+state = [[], [], 0]  
 
 class Graph:
     def __init__(self, V0, V1):
-        self.V0 = V0 #cạnh của V_0
-        self.V1 = V1 #cạnh của V_1
-        self.Node_V0 = [] #đỉnh của V_0 đã đc thêm
-        self.Node_V1 = [] #đỉnh của V_1 đã đc thêm
+        self.V0 = V0 
+        self.V1 = V1 
+        self.Node_V0 = [] 
+        self.Node_V1 = [] 
 
     def add_edge(self, a, b):
         if type(a[0]) is int:
@@ -207,8 +207,6 @@ def EQUIVRIGHT(v,sigma, delta):
     state[2] += 1
     return colorV1[v[0][0]][v[0][1]][v[0][2]][v[1]]
 
-
-# Danh sách V1 được nối từ u  
 def A0(u, sigma, delta):
     listV = []
     for x in sigma:
@@ -218,8 +216,6 @@ def A0(u, sigma, delta):
             listV.append(((u[0], q_, x), 0))
     return listV
 
-
-# Danh sách V0 được nối từ v
 def A1(v, delta):
     listU = []
     if (v[1] == 0):
@@ -230,32 +226,23 @@ def A1(v, delta):
             listU.append((v[0][0], q_))
     return listU
 
-
-# Thêm vào đồ thị H: Gốc v đỉnh u
 def ADDARC(v, u):
     graphH[v].append(u)
     return graphH
 
-
-# Lấy danh sách các đỉnh trong đồ thị H
 def VERTICESH():
     listVer = []
     for u in graphH:
-        if u not in listVer:  # Kiểm tra nếu đỉnh u chưa có trong all_vertices
+        if u not in listVer: 
             listVer.append(u)
-        # Thêm các đỉnh cuối vào list
         for v in graphH[u]:
-            if v not in listVer:  # Kiểm tra nếu đỉnh v chưa có trong all_vertices
+            if v not in listVer: 
                 listVer.append(v)
     return listVer
 
-
-# Lấy các đỉnh được nối từ đỉnh gốc u
 def ADJ(u):
     return graphH[u]
 
-
-# Gom nhóm các trạng thái: Đưa ra danh sách đỉnh cuối cùng
 def GRAPHW():
     graphW = {}
     for u in V0:
@@ -271,8 +258,6 @@ def GRAPHW():
 
     return graphWe
 
-
-# Lấy V0 cần xét khi sử dụng thuật toán 5
 def getV0_considered(Q, sigma, F, delta):
     group = labelStates(Q, sigma, F, delta)
     V0_considered = []

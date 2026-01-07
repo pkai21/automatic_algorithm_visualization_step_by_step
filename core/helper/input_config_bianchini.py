@@ -3,10 +3,6 @@ import csv
 import ast
 
 def set_nfa_config(states, final_states, alphabet, transitions):
-    """
-    Hàm này chỉ nhận dữ liệu thô, xử lý và TRẢ VỀ kết quả.
-    Không lưu vào biến toàn cục nào cả.
-    """
     Q = states
     sigma, sigma_labels = convert_sigma(alphabet)
     F = convert_F(final_states, Q)
@@ -14,10 +10,8 @@ def set_nfa_config(states, final_states, alphabet, transitions):
     delta_raw = convert_to_2d_array(transitions, Q, sigma)
     delta = normalize_delta(delta_raw)
 
-    # Trả về kết quả để người gọi tự quản lý
     return Q, sigma, sigma_labels, F, delta
 
-# --- Các hàm hỗ trợ giữ nguyên ---
 def convert_to_2d_array(delta_tuple, Q, sigma):
     print ("Delta tuple:", delta_tuple)
     result = [[[] for _ in range(len(sigma))] for _ in range(len(Q))]

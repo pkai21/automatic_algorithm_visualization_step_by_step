@@ -16,8 +16,8 @@ from core.gen.validate import validate_Q, validate_F
 from core.helper.input_config_bianchini import convert_F, convert_to_2d_array, convert_sigma
 
 # --- IMPORT BOTH VISUALIZATIONS ---
-from core.visualization.visualization_couterexample import visualize_couterexample as visualize_v1 # Mặc định V1
-from core.visualization.visualization_bianchini_algo import visualize as visualize_v2             # V2 là Bianchini
+from core.visualization.visualization_couterexample import visualize_couterexample as visualize_v1 
+from core.visualization.visualization_bianchini_algo import visualize as visualize_v2            
 
 # Import Algorithm
 from core.src.bianchini_algo.algorithm_3 import MINIMIZENFA 
@@ -50,10 +50,9 @@ class CounterExamplePage(BaseView):
         self.is_maximized = False
         self.maximized_frame = None
 
-        # --- [NEW] VIZ MODE & CACHE ---
-        # Cache lưu dict: {key: { 'Q':..., 'F':..., 'delta':..., 'sigma':..., 'labels':... } }
+        # --- VIZ MODE & CACHE ---
         self.panel_data_cache = {} 
-        self.panel_viz_modes = {} # Key -> "V1" or "V2"
+        self.panel_viz_modes = {} 
 
         # --- THEME CONFIGURATION ---
         self.theme_corner_radius = 20
@@ -81,7 +80,6 @@ class CounterExamplePage(BaseView):
         self.main_area.grid_rowconfigure(1, weight=0)
         self.is_maximized = False
         self.maximized_frame = None
-        # Reset cache khi đổi màn hình lớn để tránh conflict key
         self.panel_data_cache = {}
         self.panel_viz_modes = {}
 
@@ -114,11 +112,11 @@ class CounterExamplePage(BaseView):
                      font=ctk.CTkFont(size=16), text_color="gray").place(relx=0.5, rely=0.5, anchor="center")
 
     # ==============================================================================
-    # [NEW] HELPER: ADD VIZ CONTROLS
+    # ADD VIZ CONTROLS
     # ==============================================================================
     def add_viz_control(self, parent_frame, panel_key):
         """Thêm nút segmented V1/V2 vào góc panel"""
-        self.panel_viz_modes[panel_key] = "V1" # Default
+        self.panel_viz_modes[panel_key] = "V1" 
         
         seg_btn = ctk.CTkSegmentedButton(parent_frame, values=["V1", "V2"], width=60, height=24,
                                          font=ctk.CTkFont(size=10, weight="bold"),
@@ -126,12 +124,10 @@ class CounterExamplePage(BaseView):
                                          unselected_color=("gray80", "gray30"),
                                          command=lambda v, k=panel_key: self.on_switch_viz_mode(k, v))
         seg_btn.set("V1")
-        # Đặt ở góc phải trên
         seg_btn.place(relx=0.96, rely=0.02, anchor="ne")
 
     def on_switch_viz_mode(self, key, mode):
         self.panel_viz_modes[key] = mode
-        # Redraw
         if key in self.panel_data_cache:
             self._render_from_cache(key)
 
@@ -152,13 +148,10 @@ class CounterExamplePage(BaseView):
         
         try:
             if mode == "V1":
-                # CounterExample Style
                 pil_image = visualize_v1(data['Q'], data['F'], data['delta'], 
                                          data['sigma'], data['labels'], 
                                          state_labels=data.get('state_labels'), return_fig=True)
             else:
-                # Bianchini Style
-                # Hàm visualize_bianchini cần thêm filename vào title để đặt tên file ảnh tạm
                 full_title = data['title'].replace(" ", "_") + "_viz"
                 pil_image = visualize_v2(data['Q'], data['F'], data['delta'], 
                                          data['sigma'], data['labels'], 
@@ -175,7 +168,6 @@ class CounterExamplePage(BaseView):
     # ==============================================================================
     def setup_auto_mode(self):
         self._clear_ui()
-        # ... (Reset variables - giữ nguyên như cũ) ...
         self.Q_counterexample = []
         self.F_counterexample = []
         self.sigma_counterexample = []
@@ -196,7 +188,7 @@ class CounterExamplePage(BaseView):
         ctk.CTkLabel(auto_input_frame, text="AUTO GENERATOR", font=ctk.CTkFont(size=20, weight="bold"), 
                      text_color=("gray40", "gray70")).pack(pady=(15, 15))
 
-        # INPUT Q/F/Sigma (Giữ nguyên)
+        # INPUT Q/F/Sigma 
         ctk.CTkLabel(auto_input_frame, text="Set number of States (Q) (> 3):", font=ctk.CTkFont(size=14, weight="bold"), anchor="w").pack(padx=20, pady=(5, 2), fill="x")
         self.entry_Q_auto = ctk.CTkEntry(auto_input_frame, height=35)
         self.entry_Q_auto.pack(padx=20, pady=(0, 8), fill="x")
@@ -241,7 +233,6 @@ class CounterExamplePage(BaseView):
         self.panels['auto_viz_top'] = viz_inner_top
         self.create_panel_canvas("auto_viz_top", "NFA")
         
-        # [NEW] Add Switch to Top
         self.add_viz_control(self.frame_auto_top, "auto_viz_top")
 
         if "auto_viz_top" in self.canvases:
@@ -254,8 +245,7 @@ class CounterExamplePage(BaseView):
         viz_inner_bottom.pack(expand=True, fill="both", padx=10, pady=10)
         self.panels['auto_viz_bottom'] = viz_inner_bottom
         self.create_panel_canvas("auto_viz_bottom", "Minimum NFA")
-        
-        # [NEW] Add Switch to Bottom
+  
         self.add_viz_control(self.frame_auto_bottom, "auto_viz_bottom")
 
         if "auto_viz_bottom" in self.canvases:
@@ -266,7 +256,6 @@ class CounterExamplePage(BaseView):
     # ==============================================================================
     def setup_input_mode(self):
         self._clear_ui()
-        # ... (Reset Data - Giữ nguyên) ...
         self.Q_counterexample = []
         self.F_counterexample = []
         self.sigma_counterexample = []
@@ -283,7 +272,6 @@ class CounterExamplePage(BaseView):
         input_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         ctk.CTkLabel(input_frame, text="MANUAL INPUT", font=ctk.CTkFont(size=20, weight="bold"), text_color=("gray40", "gray70")).pack(pady=(15, 15))
 
-        # ... (Inputs Q/F/Sigma/Delta - Giữ nguyên) ...
         ctk.CTkLabel(input_frame, text="Set number of States (Q):", font=ctk.CTkFont(size=14, weight="bold"), anchor="w").pack(padx=20, pady=(5, 2), fill="x")
         self.entry_Q = ctk.CTkEntry(input_frame, height=35)
         self.entry_Q.pack(padx=20, pady=(0, 8), fill="x")
@@ -329,7 +317,6 @@ class CounterExamplePage(BaseView):
         self.panels['counter_input_viz'] = viz_inner
         self.create_panel_canvas("counter_input_viz", "Counter-Example Preview")
         
-        # [NEW] Add Switch
         self.add_viz_control(viz_container, "counter_input_viz")
         
         if self.Q_counterexample: self.perform_visualization("counter_input_viz")
@@ -376,7 +363,6 @@ class CounterExamplePage(BaseView):
             inner.pack(expand=True, fill="both", padx=5, pady=5)
             self.panels[panel_key] = inner
             self.create_panel_canvas(panel_key, title)
-            # [NEW] Add Switch
             self.add_viz_control(container_frame, panel_key)
             if panel_key in self.canvases:
                 self.canvases[panel_key][0].get_tk_widget().bind('<Double-1>', lambda event, f=container_frame: self.toggle_maximize(f))
@@ -425,7 +411,6 @@ class CounterExamplePage(BaseView):
         for i in range((self.auto_Q_count - self.auto_F_count),self.auto_Q_count): self.F_mini_counterexample[i] = 1
         self.delta_mini_counterexample = convert_to_2d_array(delta_mini,self.Q_mini_counterexample,self.sigma_counterexample)
         
-        # [UPDATE] Use cache
         self._cache_and_render("auto_viz_bottom", self.Q_mini_counterexample, self.F_mini_counterexample, self.delta_mini_counterexample, self.sigma_counterexample, self.sigma_labels_counterexample, "Minimum NFA")
         
         F1_val = [i for i in range((self.auto_Q_count-self.auto_F_count),self.auto_Q_count)]
@@ -433,8 +418,7 @@ class CounterExamplePage(BaseView):
         self.F_counterexample = [0] * len(self.Q_counterexample)
         for i in F2_val: self.F_counterexample[i] = 1
         self.delta_counterexample = convert_to_2d_array(delta,self.Q_counterexample ,self.sigma_counterexample)
-        
-        # [UPDATE] Use cache
+
         self._cache_and_render("auto_viz_top", self.Q_counterexample, self.F_counterexample, self.delta_counterexample, self.sigma_counterexample, self.sigma_labels_counterexample, "NFA")
 
     def on_click_finite_nfa(self):
@@ -448,7 +432,6 @@ class CounterExamplePage(BaseView):
         for i in range((self.auto_Q_count-self.auto_F_count),self.auto_Q_count): self.F_mini_counterexample[i] = 1
         self.delta_mini_counterexample = convert_to_2d_array(delta_mini,self.Q_mini_counterexample,self.sigma_counterexample)
         
-        # [UPDATE]
         self._cache_and_render("auto_viz_bottom", self.Q_mini_counterexample, self.F_mini_counterexample, self.delta_mini_counterexample, self.sigma_counterexample, self.sigma_labels_counterexample, "Minimum NFA")
         
         F1_val = [i for i in range((self.auto_Q_count-self.auto_F_count),self.auto_Q_count)]
@@ -456,8 +439,7 @@ class CounterExamplePage(BaseView):
         self.F_counterexample = [0] * len(self.Q_counterexample)
         for i in F2_val: self.F_counterexample[i] = 1
         self.delta_counterexample = convert_to_2d_array(delta,self.Q_counterexample ,self.sigma_counterexample)
-        
-        # [UPDATE]
+
         self._cache_and_render("auto_viz_top", self.Q_counterexample, self.F_counterexample, self.delta_counterexample, self.sigma_counterexample, self.sigma_labels_counterexample, "NFA")
 
     def run_optimization_logic(self):
@@ -468,8 +450,7 @@ class CounterExamplePage(BaseView):
             try:
                 minimized = MINIMIZENFA(1, Q=self.Q_counterexample, sigma=self.sigma_counterexample, F=self.F_counterexample, delta=self.delta_counterexample)
                 new_Q, new_F, new_delta, state_labels = newNFA(minimized, self.Q_counterexample, self.F_counterexample, self.sigma_counterexample, self.delta_counterexample)
-                
-                # [UPDATE]
+
                 self._cache_and_render("result_output1", new_Q, new_F, new_delta, self.sigma_counterexample, self.sigma_labels_counterexample, "Minimized NFA", state_labels=state_labels)
                 
             except Exception as e:
@@ -478,19 +459,16 @@ class CounterExamplePage(BaseView):
             try:
                 minimized = TARJANNFA(Q=self.Q_counterexample, sigma=self.sigma_counterexample, F=self.F_counterexample, delta=self.delta_counterexample)
                 new_Q, new_F, new_delta, state_labels = newNFA(minimized, self.Q_counterexample, self.F_counterexample, self.sigma_counterexample, self.delta_counterexample)
-                
-                # [UPDATE]
+
                 self._cache_and_render("result_output1", new_Q, new_F, new_delta, self.sigma_counterexample, self.sigma_labels_counterexample, "Minimized NFA", state_labels=state_labels)
                 
             except Exception as e:
                 self.clear_panel_image("result_output1", f"Error: {str(e)}")
 
     def perform_visualization(self, panel_key):
-        # [UPDATE]
         self._cache_and_render(panel_key, self.Q_counterexample, self.F_counterexample, self.delta_counterexample, self.sigma_counterexample, self.sigma_labels_counterexample, "Visual Preview")
     
     def perform_mini_visualization(self, panel_key):
-        # [UPDATE]
         if self.Q_mini_counterexample == []: 
             nfa = set_kameda_in(self.sigma_counterexample, self.sigma_labels_counterexample, self.F_counterexample,self.delta_counterexample)
             print("--- Original NFA ---")
@@ -509,8 +487,6 @@ class CounterExamplePage(BaseView):
              
         self._cache_and_render(panel_key, self.Q_mini_counterexample, self.F_mini_counterexample, self.delta_mini_counterexample, self.sigma_counterexample, self.sigma_labels_counterexample, "Visual Preview")
 
-
-    # ... (Các hàm validate_Q, validate_F, validate_sigma, add_transition, ... giữ nguyên như cũ, chỉ lưu ý perform_visualization đã update) ...
     def _validate_auto_inputs(self):
         v_q = self.validate_Q_auto(is_submit=True)
         v_f = self.validate_F_auto(is_submit=True)

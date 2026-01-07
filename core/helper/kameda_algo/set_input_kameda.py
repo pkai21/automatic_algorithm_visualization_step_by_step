@@ -1,4 +1,3 @@
-
 from core.src.kameda_algo.algorithm_kameda import NFA
 
 def set_kameda_in(sigma,sigma_labels,F,delta):

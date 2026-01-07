@@ -41,18 +41,15 @@ class ComparisonPage(BaseView):
         self.local_view_buttons = {} 
         
         # --- VIZ MODE MANAGEMENT ---
-        # "V1": Bianchini Style, "V2": CounterExample Style
         self.panel_viz_modes = {
             "input1": "V1", "input2": "V1",
             "output1": "V1", "output2": "V1"
         }
         self.panel_data_cache = {} 
 
-        # Biến quản lý trạng thái Zoom
         self.is_maximized = False
         self.panel_wrappers = {} 
-        
-        # --- Theme Config ---
+
         self.theme_corner_radius = 20
         self.btn_corner_radius = 12
         self.section_bg_color = ("gray95", "gray17")
@@ -63,13 +60,13 @@ class ComparisonPage(BaseView):
         self.show_algorithm_selection()
 
     def _build_layout(self):
-        # 1. SIDEBAR CONTAINER (Left)
+        # 1. SIDEBAR CONTAINER 
         self.sidebar_width = 300
         self.sidebar_container = ctk.CTkFrame(self, width=self.sidebar_width, fg_color="transparent")
         self.sidebar_container.pack(side=tk.LEFT, fill=tk.Y, padx=20, pady=20)
         self.sidebar_container.pack_propagate(False)
 
-        # 2. MAIN GRID (Right)
+        # 2. MAIN GRID 
         right_frame = ctk.CTkFrame(self, fg_color="transparent")
         right_frame.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH, padx=(0, 20), pady=20)
         
@@ -89,14 +86,14 @@ class ComparisonPage(BaseView):
         self.panel_wrappers = {}
 
         for key, row, col in layout_defs:
-            # Wrapper Frame (Card)
+            # Wrapper Frame 
             card = ctk.CTkFrame(self.grid_frame, fg_color=self.section_bg_color, corner_radius=self.theme_corner_radius, border_width=0)
             card.grid(row=row, column=col, sticky="nsew", padx=8, pady=8)
             
             card.grid_rowconfigure(0, weight=1)
             card.grid_columnconfigure(0, weight=1)
             
-            # Inner Container (Canvas Area)
+            # Inner Container 
             container = ctk.CTkFrame(card, fg_color="transparent")
             container.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
             
@@ -108,12 +105,11 @@ class ComparisonPage(BaseView):
             self.create_panel_canvas(key, title)
             
             # ==================================================================
-            # [UI TINH TẾ] CONTROL GROUP CONTAINER
+            # CONTROL GROUP CONTAINER
             # ==================================================================
             control_group = ctk.CTkFrame(card, fg_color="transparent", height=30)
             control_group.place(relx=0.97, rely=0.02, anchor="ne")
 
-            # 1. Nút Switch V1/V2
             seg_btn = ctk.CTkSegmentedButton(control_group, values=["V1", "V2"], width=70, height=24,
                                              font=ctk.CTkFont(size=11, weight="bold"),
                                              selected_color="#3B8ED0",
@@ -124,7 +120,6 @@ class ComparisonPage(BaseView):
             seg_btn.set("V1")
             seg_btn.pack(side="right", padx=0) 
 
-            # 2. Nút Toggle "Show Min"
             if key in ["input1", "input2"]:
                 btn_toggle = ctk.CTkButton(control_group, text="Show Min", width=70, height=24, 
                                            font=ctk.CTkFont(size=11, weight="bold"),
@@ -151,15 +146,11 @@ class ComparisonPage(BaseView):
 
     def _render_internal(self, nfa_data, panel_key, title):
         mode = self.panel_viz_modes.get(panel_key, "V1")
-        
-        # --- [FIX] XỬ LÝ UNPACKING DATA CÓ THỂ CÓ HOẶC KHÔNG CÓ STATE_LABELS ---
         state_labels = None
-        
-        # Nếu data có 7 phần tử -> có chứa state_labels
+
         if len(nfa_data) == 7:
             Q, sigma, sigma_labels, F, delta, filename, state_labels = nfa_data
         else:
-            # Nếu data chỉ có 6 phần tử -> không có state_labels (Input NFA)
             Q, sigma, sigma_labels, F, delta, filename = nfa_data
         
         full_title = title.replace(" ", "_") + f"_{filename}"
@@ -167,10 +158,8 @@ class ComparisonPage(BaseView):
         pil_image = None
         try:
             if mode == "V1":
-                # Bianchini Algo Visualization
                 pil_image = visualize_v1(Q, F, delta, sigma, sigma_labels, full_title, len(Q), state_labels=state_labels, return_fig=True)
             else:
-                # CounterExample Visualization
                 pil_image = visualize_v2(Q, F, delta, sigma, sigma_labels, state_labels=state_labels, return_fig=True)
             
             if pil_image:
@@ -179,7 +168,6 @@ class ComparisonPage(BaseView):
             print(f"Render Error ({mode}): {e}")
 
     def display_nfa_to_panel(self, nfa_data, panel_key, title):
-        # Lưu vào cache và render
         self.panel_data_cache[panel_key] = (nfa_data, title)
         self._render_internal(nfa_data, panel_key, title)
 
@@ -187,7 +175,6 @@ class ComparisonPage(BaseView):
     # OTHER FUNCTIONS
     # ==============================================================================
     def toggle_maximize(self, target_key):
-        # ... (Giữ nguyên)
         layout_defs = [("input1", 0, 0), ("input2", 0, 1), ("output1", 1, 0), ("output2", 1, 1)]
         if self.is_maximized:
             for key, wrapper in self.panel_wrappers.items(): wrapper.grid_forget()
@@ -200,7 +187,6 @@ class ComparisonPage(BaseView):
         self.grid_frame.update_idletasks()
 
     def toggle_local_view(self, key):
-        # ... (Giữ nguyên)
         is_showing_original = (self.local_view_states[key] == "original")
         target_nfa = None
         new_state = ""
@@ -230,7 +216,6 @@ class ComparisonPage(BaseView):
         for widget in self.sidebar_container.winfo_children(): widget.destroy()
 
     def show_algorithm_selection(self):
-        # ... (Giữ nguyên)
         self.file_buttons = []
         self.current_file_index = -1
         self.is_auto_run = False
@@ -256,7 +241,6 @@ class ComparisonPage(BaseView):
         self.setup_nfa_controls()
 
     def setup_nfa_controls(self):
-        # ... (Giữ nguyên)
         self.clear_sidebar()
         left_frame2 = ctk.CTkFrame(self.sidebar_container, height=200, fg_color=self.section_bg_color, corner_radius=self.theme_corner_radius)
         left_frame2.pack(side=tk.BOTTOM, fill=tk.X, anchor="s", pady=(15, 0))
@@ -289,7 +273,6 @@ class ComparisonPage(BaseView):
         if self.file_list: self.populate_file_list()
 
     def select_folder(self):
-        # ... (Giữ nguyên)
         folder = filedialog.askdirectory()
         if not folder: return
         self.folder_path = folder
@@ -303,7 +286,6 @@ class ComparisonPage(BaseView):
             self.file_list = []
 
     def populate_file_list(self):
-        # ... (Giữ nguyên)
         for w in self.file_scroll_frame.winfo_children(): w.destroy()
         self.file_buttons = []
         for idx, path in enumerate(self.file_list):
@@ -319,7 +301,6 @@ class ComparisonPage(BaseView):
         self.load_current_file()
 
     def load_current_file(self):
-        # ... (Giữ nguyên)
         self.panel_data_cache = {}
         self.clear_panel_image("input1", "NFA 1")
         self.clear_panel_image("input2", "NFA 2")
@@ -421,11 +402,9 @@ class ComparisonPage(BaseView):
             if is_valid_result:
                 new_Q, new_F, new_delta, state_labels = newNFA(minimized, Q, F, sigma, delta)
                 
-                # Đóng gói dữ liệu
                 result_data = (new_Q, sigma, sigma_labels, new_F, new_delta, filename, state_labels)
                 self.panel_data_cache[panel_key] = (result_data, title)
                 
-                # --- BƯỚC 3: VẼ HÌNH ---
                 mode = self.panel_viz_modes.get(panel_key, "V1")
                 full_title = title + f"_{filename}"
                 pil_image = None
@@ -439,7 +418,6 @@ class ComparisonPage(BaseView):
                     self.update_panel_image(pil_image, panel_key, title)
             else:
                 print(f"Warning: {self.selected_algorithm} returned invalid result: {minimized}")
-                # Có thể hiển thị thông báo lỗi lên giao diện nếu cần
                 
         except Exception as e:
             print(f"Error running {self.selected_algorithm}: {e}")
