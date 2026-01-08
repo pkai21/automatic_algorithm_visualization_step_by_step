@@ -1,3 +1,13 @@
+# ------------------------------------------------------------------------------
+# Copyright (c) 2026 Phan_Van_Khai
+# All rights reserved.
+#
+# This source code is the proprietary and confidential property of Phan_Van_Khai.
+# Unauthorized copying, distribution, or modification of this file, 
+# via any medium, is strictly prohibited.
+# ------------------------------------------------------------------------------
+
+import sys
 import random
 
 def infinite_generate_delta(num_states, num_transitions, sigma):
